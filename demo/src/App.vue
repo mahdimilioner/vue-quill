@@ -1,30 +1,38 @@
 <template>
-  <BasicExample />
-  <AddModules />
-  <ContentType />
+  <PittoolsShowcase />
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import BasicExample from './examples/BasicExample.vue'
-import AddModules from './examples/AddModules.vue'
-import ContentType from './examples/ContentType.vue'
+import PittoolsShowcase from './pittools/PittoolsShowcase.vue'
 
 export default defineComponent({
   name: 'App',
   components: {
-    BasicExample,
-    AddModules,
-    ContentType,
+    PittoolsShowcase,
   },
 })
 </script>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: radial-gradient(120% 90% at 50% 0%, #1b1a1d 0%, #0c0c0e 60%);
+  min-height: 100vh;
+}
+
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: Vazirmatn, 'Segoe UI', Tahoma, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
 }
 </style>
