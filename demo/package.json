@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "quill-blot-formatter": "^1.0.5",
+    "three": "^0.160.0",
     "vue": "^3.2.41"
   },
   "devDependencies": {

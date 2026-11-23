@@ -2,19 +2,16 @@
   <section ref="track" class="track" aria-labelledby="turntable-title">
     <div class="stage">
       <div class="stage-head">
-        <h2 id="turntable-title">با اسکرول بچرخان</h2>
+        <h2 id="turntable-title">دریل سه‌بعدی در حال چرخش</h2>
         <p>
-          اسکرول به پایین، دستگاه را از پایین به بالا می‌چرخاند؛ اسکرول به بالا همان مسیر را
-          برمی‌گرداند.
+          این یک مدل واقعاً سه‌بعدی است، نه عکس. اسکرول به پایین بدنه را از پایین به بالا می‌چرخاند
+          و اسکرول به بالا همان مسیر را برمی‌گرداند؛ وقتی دست نزنی، خودش آرام می‌چرخد.
         </p>
       </div>
 
       <div class="viewport">
         <div class="shadow" :style="shadowStyle"></div>
-        <div class="object" :style="objectStyle">
-          <img :src="render" alt="دریل Pittools در حال چرخش سه‌بعدی" />
-        </div>
-        <div class="edge" :style="edgeStyle"></div>
+        <Drill3D :progress="progress" @angle="onAngle" />
       </div>
 
       <div class="readout">
@@ -33,18 +30,17 @@
 
 <script lang="ts">
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref } from 'vue'
+import Drill3D from './Drill3D.vue'
 
 const persianNumber = new Intl.NumberFormat('fa-IR')
 
 export default defineComponent({
   name: 'ProductTurntable',
-  props: {
-    render: { type: String, required: true },
-    baseX: { type: Number, default: 0 },
-  },
-  setup(props) {
+  components: { Drill3D },
+  setup() {
     const track = ref<HTMLElement | null>(null)
     const progress = ref(0)
+    const angle = ref(0)
     let frame = 0
 
     const measure = () => {
@@ -76,45 +72,31 @@ export default defineComponent({
       if (frame) window.cancelAnimationFrame(frame)
     })
 
-    // Scroll down tips the product up: bottom face first, then the top.
-    const rotation = computed(() => props.baseX + progress.value * 180)
+    const onAngle = (value: number) => {
+      angle.value = value
+    }
 
-    const degrees = computed(() => persianNumber.format(Math.round(rotation.value)))
+    const normalized = computed(() => ((angle.value % 360) + 360) % 360)
+
+    const degrees = computed(() => persianNumber.format(Math.round(normalized.value)))
 
     const phaseLabel = computed(() => {
-      const value = rotation.value
-      if (value < -14) return 'نمای از بالا'
-      if (value < 20) return 'نمای روبه‌رو'
-      if (value < 70) return 'از پایین به بالا'
-      if (value < 110) return 'لبهٔ دستگاه'
-      if (value < 160) return 'از بالا'
-      return 'پشت دستگاه'
+      const value = normalized.value
+      if (value < 30 || value >= 330) return 'نمای روبه‌رو'
+      if (value < 150) return 'از بالا'
+      if (value < 210) return 'پشت دستگاه'
+      return 'از پایین'
     })
-
-    const objectStyle = computed(() => ({
-      transform: 'rotateX(' + rotation.value + 'deg) rotateY(-10deg)',
-    }))
 
     const shadowStyle = computed(() => {
-      const radians = (rotation.value * Math.PI) / 180
-      const spread = Math.abs(Math.cos(radians))
+      const spread = Math.abs(Math.cos((normalized.value * Math.PI) / 180))
       return {
-        opacity: String(0.16 + spread * 0.44),
-        transform: 'scale(' + (1 - 0.22 * Math.abs(Math.sin(radians))) + ')',
+        opacity: String(0.08 + spread * 0.4),
+        transform: 'scale(' + (0.78 + 0.22 * spread) + ')',
       }
     })
 
-    // The flat render vanishes for a moment when it turns edge-on;
-    // a thin product edge keeps the stage from going empty.
-    const edgeStyle = computed(() => {
-      const facing = Math.abs(Math.cos((rotation.value * Math.PI) / 180))
-      return {
-        opacity: String(Math.max(0, 1 - facing * 2.4)),
-        transform: 'scaleX(' + (0.62 + 0.38 * (1 - facing)) + ')',
-      }
-    })
-
-    return { track, progress, degrees, phaseLabel, objectStyle, shadowStyle, edgeStyle }
+    return { track, progress, degrees, phaseLabel, shadowStyle, onAngle }
   },
 })
 </script>
@@ -132,14 +114,14 @@ export default defineComponent({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 14px;
   height: 100vh;
-  padding: 40px 0;
+  padding: 32px 0;
   overflow: hidden;
 }
 
 .stage-head {
-  max-width: 560px;
+  max-width: 600px;
   text-align: center;
 }
 
@@ -163,50 +145,19 @@ export default defineComponent({
   display: grid;
   place-items: center;
   width: 100%;
-  max-width: 760px;
-  perspective: 1500px;
-}
-
-.object {
-  width: min(560px, 78vw);
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.object img {
-  display: block;
-  width: 100%;
-  border-radius: 18px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+  max-width: 820px;
+  min-height: 0;
 }
 
 .shadow {
   position: absolute;
-  bottom: 12%;
+  bottom: 14%;
   width: min(420px, 62vw);
-  height: 26px;
+  height: 24px;
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(0, 0, 0, 0.85), transparent 72%);
   filter: blur(6px);
-  transition: opacity 0.15s linear;
-}
-
-.edge {
-  position: absolute;
-  width: min(520px, 74vw);
-  height: 7px;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 120, 0, 0) 0%,
-    #ff7800 18%,
-    #ffd0a1 50%,
-    #ff7800 82%,
-    rgba(255, 120, 0, 0) 100%
-  );
-  box-shadow: 0 0 26px rgba(255, 120, 0, 0.5);
-  pointer-events: none;
-  transition: opacity 0.12s linear;
+  transition: opacity 0.2s linear;
 }
 
 .readout {
@@ -259,12 +210,16 @@ export default defineComponent({
 
 @media (max-width: 640px) {
   .stage {
-    gap: 12px;
-    padding: 24px 0;
+    gap: 10px;
+    padding: 20px 0;
   }
 
-  .object {
-    width: 86vw;
+  .stage-head p {
+    font-size: 0.82rem;
+  }
+
+  .viewport {
+    max-height: 52vh;
   }
 }
 </style>
